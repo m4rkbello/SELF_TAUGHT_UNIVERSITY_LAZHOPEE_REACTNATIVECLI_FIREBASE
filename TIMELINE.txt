@@ -1,2 +1,154 @@
 1.FIRST INSTALL A REACT NATIVE PROJECT  AS 
 ->npx @react-native-community/cli@latest init lazhopee
+
+
+FOLDERING AND STRUCTURE PATTERN 
+lazhopee/
+├── src/
+│   ├── api/
+│   │   ├── client.js              # Axios instance configuration
+│   │   ├── endpoints.js           # API endpoint constants
+│   │   ├── interceptors.js        # Request/response interceptors
+│   │   └── services/              # API service functions
+│   │       ├── authService.js
+│   │       ├── userService.js
+│   │       └── productService.js
+│   │
+│   ├── firebase/
+│   │   ├── config.js              # Firebase initialization
+│   │   ├── auth.js                # Firebase Auth functions
+│   │   ├── firestore.js           # Firestore functions
+│   │   ├── storage.js             # Firebase Storage functions
+│   │   └── realtime.js            # Realtime Database functions
+│   │
+│   ├── assets/
+│   │   ├── fonts/
+│   │   ├── images/
+│   │   ├── icons/
+│   │   └── animations/            # Lottie files
+│   │
+│   ├── components/
+│   │   ├── common/                # Reusable components
+│   │   │   ├── Button/
+│   │   │   │   ├── Button.jsx
+│   │   │   │   ├── Button.styles.js
+│   │   │   │   └── index.js
+│   │   │   ├── Input/
+│   │   │   ├── Card/
+│   │   │   ├── Modal/
+│   │   │   └── Loading/
+│   │   │
+│   │   └── features/              # Feature-specific components
+│   │       ├── auth/
+│   │       │   ├── LoginForm.jsx
+│   │       │   └── RegisterForm.jsx
+│   │       └── product/
+│   │           ├── ProductCard.jsx
+│   │           └── ProductList.jsx
+│   │
+│   ├── config/
+│   │   ├── app.config.js          # App configuration
+│   │   ├── api.config.js          # API URLs, timeouts
+│   │   └── theme.config.js        # Theme colors, fonts
+│   │
+│   ├── constants/
+│   │   ├── colors.js
+│   │   ├── sizes.js
+│   │   ├── routes.js              # Route names
+│   │   ├── regex.js               # Validation patterns
+│   │   └── messages.js            # Static messages
+│   │
+│   ├── contexts/                  # React Context API
+│   │   ├── AuthContext.jsx
+│   │   ├── ThemeContext.jsx
+│   │   └── CartContext.jsx
+│   │
+│   ├── hooks/
+│   │   ├── useAuth.js
+│   │   ├── useApi.js
+│   │   ├── useFetch.js
+│   │   ├── useDebounce.js
+│   │   ├── useKeyboard.js
+│   │   └── usePermissions.js
+│   │
+│   ├── navigation/
+│   │   ├── AppNavigator.jsx       # Main navigator
+│   │   ├── AuthNavigator.jsx      # Auth stack
+│   │   ├── MainNavigator.jsx      # Main app stack
+│   │   └── TabNavigator.jsx       # Bottom tabs
+│   │
+│   ├── screens/
+│   │   ├── auth/
+│   │   │   ├── LoginScreen.jsx
+│   │   │   ├── RegisterScreen.jsx
+│   │   │   └── ForgotPasswordScreen.jsx
+│   │   │
+│   │   ├── home/
+│   │   │   ├── HomeScreen.jsx
+│   │   │   └── components/
+│   │   │
+│   │   ├── profile/
+│   │   │   └── ProfileScreen.jsx
+│   │   │
+│   │   └── product/
+│   │       ├── ProductListScreen.jsx
+│   │       └── ProductDetailScreen.jsx
+│   │
+│   ├── services/                  # Business logic services
+│   │   ├── storageService.js      # AsyncStorage wrapper
+│   │   ├── notificationService.js
+│   │   ├── analyticsService.js
+│   │   └── permissionService.js
+│   │
+│   ├── store/                     # Redux Toolkit
+│   │   ├── store.js               # Redux store configuration
+│   │   ├── rootReducer.js         # Combine all reducers
+│   │   │
+│   │   ├── slices/                # Redux Toolkit slices
+│   │   │   ├── authSlice.js       # Auth state & actions
+│   │   │   ├── userSlice.js       # User data
+│   │   │   ├── cartSlice.js       # Shopping cart
+│   │   │   └── productSlice.js    # Products list
+│   │   │
+│   │   ├── thunks/                # Async actions with Firebase
+│   │   │   ├── authThunks.js      # Login, register with Firebase
+│   │   │   ├── userThunks.js      # Fetch user from Firestore
+│   │   │   └── productThunks.js   # Fetch products from Firestore
+│   │   │
+│   │   └── middleware/
+│   │       ├── logger.js          # Log Redux actions
+│   │       └── firebaseSync.js    # Sync Redux with Firebase
+│   │
+│   ├── styles/
+│   │   ├── globalStyles.js
+│   │   ├── typography.js
+│   │   └── spacing.js
+│   │
+│   ├── types/                     # TypeScript types/interfaces
+│   │   ├── api.types.ts
+│   │   ├── user.types.ts
+│   │   └── product.types.ts
+│   │
+│   ├── utils/
+│   │   ├── validators.js          # Form validation
+│   │   ├── formatters.js          # Date, currency formatters
+│   │   ├── helpers.js             # Helper functions
+│   │   ├── logger.js              # Custom logger
+│   │   └── errorHandler.js        # Error handling utility
+│   │
+│   └── App.jsx                    # Main App component
+│
+├── android/
+├── ios/
+├── .env                           # Environment variables
+├── .env.development
+├── .env.production
+├── .gitignore
+├── app.json
+├── babel.config.js
+├── index.js                       # Entry point
+├── metro.config.js
+├── package.json
+├── README.md
+└── tsconfig.json
+```
