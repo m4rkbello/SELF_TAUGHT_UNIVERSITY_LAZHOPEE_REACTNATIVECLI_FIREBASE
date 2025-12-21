@@ -1,0 +1,2 @@
+1.FIRST INSTALL A REACT NATIVE PROJECT  AS 
+->npx @react-native-community/cli@latest init lazhopee
