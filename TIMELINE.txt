@@ -160,3 +160,18 @@ npm install @react-navigation/stack          # Stack Navigator
 npm install @react-navigation/bottom-tabs    # Bottom Tabs
 npm install @react-navigation/drawer         # Drawer Navigator
 npm install @react-navigation/native-stack   # Native Stack (recommended)
+
+
+4. ADDED  THIS FUCKING SHIT COMMAND!  
+# Kill any hanging emulator processes
+taskkill /F /IM qemu-system-x86_64.exe
+taskkill /F /IM emulator.exe
+taskkill /F /IM adb.exe
+
+# Restart adb
+adb kill-server
+adb start-server
+
+# Try starting emulator again
+cd C:\Users\markb\AppData\Local\Android\Sdk\emulator
+emulator.exe -avd Pixel_9
