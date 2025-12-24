@@ -5,7 +5,14 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  Dimensions,
 } from 'react-native';
+
+const { width, height } = Dimensions.get('window');
 
 function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
@@ -16,82 +23,253 @@ function LoginScreen({ navigation }) {
     console.log('Login:', email, password);
   };
 
+  const handleGoogleLogin = () => {
+    // Add your Google login logic here
+    console.log('Google Login');
+  };
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Login</Text>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        {/* Logo */}
+        <View style={styles.logoContainer}>
+          <Image
+            source={require('../../assets/images/logo.png')} // Add your logo path
+            style={styles.logo}
+            resizeMode="contain"
+          />
+          {/* Or use a placeholder if you don't have a logo yet */}
+          {/* <View style={styles.logoPlaceholder}>
+            <Text style={styles.logoText}>LazhoPee</Text>
+          </View> */}
+        </View>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
+        {/* Title */}
+        <Text style={styles.title}>Welcome Back</Text>
+        <Text style={styles.subtitle}>Login to your account</Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
+        {/* Google Login Button */}
+        <TouchableOpacity
+          style={styles.googleButton}
+          onPress={handleGoogleLogin}
+        >
+          <Image
+            source={require('../../assets/images/google.png')} // Add Google icon
+            style={styles.googleIcon}
+          />
+          <Text style={styles.googleButtonText}>Continue with Google</Text>
+        </TouchableOpacity>
 
-      <TouchableOpacity style={styles.button} onPress={handleLogin}>
-        <Text style={styles.buttonText}>Login</Text>
-      </TouchableOpacity>
+        {/* Divider */}
+        <View style={styles.dividerContainer}>
+          <View style={styles.divider} />
+          <Text style={styles.dividerText}>OR</Text>
+          <View style={styles.divider} />
+        </View>
 
-      <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-        <Text style={styles.linkText}>
-          Don't have an account? Sign up
-        </Text>
-      </TouchableOpacity>
+        {/* Email Input */}
+        <TextInput
+          style={styles.input}
+          placeholder="Email"
+          placeholderTextColor="#999"
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoCorrect={false}
+        />
 
-      <TouchableOpacity onPress={() => navigation.goBack()}>
-        <Text style={styles.linkText}>Back to Welcome</Text>
-      </TouchableOpacity>
-    </View>
+        {/* Password Input */}
+        <TextInput
+          style={styles.input}
+          placeholder="Password"
+          placeholderTextColor="#999"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+          autoCapitalize="none"
+        />
+
+        {/* Forgot Password */}
+        <TouchableOpacity style={styles.forgotPassword}>
+          <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+        </TouchableOpacity>
+
+        {/* Login Button */}
+        <TouchableOpacity style={styles.button} onPress={handleLogin}>
+          <Text style={styles.buttonText}>Login</Text>
+        </TouchableOpacity>
+
+        {/* Sign Up Link */}
+        <View style={styles.signupContainer}>
+          <Text style={styles.signupText}>Don't have an account? </Text>
+          <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+            <Text style={styles.signupLink}>Sign Up</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Back to Welcome */}
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Text style={styles.backButtonText}>← Back to Welcome</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    padding: 20,
     backgroundColor: '#fff',
   },
-  title: {
-    fontSize: 32,
+  scrollContent: {
+    flexGrow: 1,
+    paddingHorizontal: width * 0.08, // 8% of screen width
+    paddingVertical: height * 0.05, // 5% of screen height
+    justifyContent: 'center',
+  },
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: height * 0.03,
+  },
+  logo: {
+    width: width * 0.4, // 40% of screen width
+    height: width * 0.4,
+    maxWidth: 150,
+    maxHeight: 150,
+  },
+  // Use this if you don't have a logo image yet
+  logoPlaceholder: {
+    width: width * 0.4,
+    height: width * 0.4,
+    maxWidth: 150,
+    maxHeight: 150,
+    backgroundColor: '#b1fd03',
+    borderRadius: 75,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  logoText: {
+    fontSize: width * 0.08,
     fontWeight: 'bold',
-    marginBottom: 40,
+    color: '#fff',
+  },
+  title: {
+    fontSize: width * 0.08, // Responsive font size
+    fontWeight: 'bold',
     textAlign: 'center',
+    color: '#333',
+    marginBottom: height * 0.01,
+  },
+  subtitle: {
+    fontSize: width * 0.04,
+    textAlign: 'center',
+    color: '#666',
+    marginBottom: height * 0.03,
+  },
+  googleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    padding: height * 0.018,
+    borderRadius: 10,
+    marginBottom: height * 0.02,
+  },
+  googleIcon: {
+    width: 24,
+    height: 24,
+    marginRight: 10,
+  },
+  googleButtonText: {
+    fontSize: width * 0.04,
+    fontWeight: '600',
+    color: '#333',
+  },
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: height * 0.025,
+  },
+  divider: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#ddd',
+  },
+  dividerText: {
+    marginHorizontal: 15,
+    fontSize: width * 0.035,
+    color: '#999',
+    fontWeight: '500',
   },
   input: {
     borderWidth: 1,
     borderColor: '#ddd',
-    padding: 15,
+    padding: height * 0.018,
     borderRadius: 10,
-    marginVertical: 10,
-    fontSize: 16,
+    marginVertical: height * 0.01,
+    fontSize: width * 0.04,
+    backgroundColor: '#f9f9f9',
+  },
+  forgotPassword: {
+    alignSelf: 'flex-end',
+    marginTop: height * 0.01,
+    marginBottom: height * 0.02,
+  },
+  forgotPasswordText: {
+    color: '#b1fd03',
+    fontSize: width * 0.035,
   },
   button: {
-    backgroundColor: '#007AFF',
-    padding: 15,
+    backgroundColor: '#b1fd03',
+    padding: height * 0.018,
     borderRadius: 10,
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: height * 0.01,
+    shadowColor: '#b1fd03',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 5,
   },
   buttonText: {
     color: '#fff',
-    fontSize: 18,
+    fontSize: width * 0.045,
     fontWeight: '600',
   },
-  linkText: {
-    color: '#007AFF',
-    textAlign: 'center',
-    marginTop: 20,
-    fontSize: 16,
+  signupContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: height * 0.025,
+  },
+  signupText: {
+    fontSize: width * 0.04,
+    color: '#666',
+  },
+  signupLink: {
+    fontSize: width * 0.04,
+    color: '#b1fd03',
+    fontWeight: '600',
+  },
+  backButton: {
+    marginTop: height * 0.02,
+    alignItems: 'center',
+  },
+  backButtonText: {
+    color: '#999',
+    fontSize: width * 0.035,
   },
 });
 
