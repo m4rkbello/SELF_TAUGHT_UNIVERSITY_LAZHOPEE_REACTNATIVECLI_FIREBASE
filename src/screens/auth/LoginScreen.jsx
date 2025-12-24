@@ -41,14 +41,10 @@ function LoginScreen({ navigation }) {
         {/* Logo */}
         <View style={styles.logoContainer}>
           <Image
-            source={require('../../assets/images/logo.png')} // Add your logo path
+            source={require('../../assets/images/logo.png')}
             style={styles.logo}
             resizeMode="contain"
           />
-          {/* Or use a placeholder if you don't have a logo yet */}
-          {/* <View style={styles.logoPlaceholder}>
-            <Text style={styles.logoText}>LazhoPee</Text>
-          </View> */}
         </View>
 
         {/* Title */}
