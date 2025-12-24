@@ -175,3 +175,8 @@ adb start-server
 # Try starting emulator again
 cd C:\Users\markb\AppData\Local\Android\Sdk\emulator
 emulator.exe -avd Pixel_9
+
+ADD   THIS FOR  REACT NATIVE NAVIGATIONS
+
+npm install @react-navigation/native @react-navigation/native-stack
+npm install react-native-screens react-native-safe-area-context
