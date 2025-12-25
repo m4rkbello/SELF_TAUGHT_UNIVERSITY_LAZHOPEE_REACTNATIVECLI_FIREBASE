@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "656684881970",
+    "project_id": "lazhopee-1b1bf",
+    "storage_bucket": "lazhopee-1b1bf.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:656684881970:android:1dd7970db23600120e842b",
+        "android_client_info": {
+          "package_name": "com.lazhopee"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBXMqv7fmnLN8NvybRAMdLKlhRHYiP0jXc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

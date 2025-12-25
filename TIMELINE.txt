@@ -180,3 +180,50 @@ ADD   THIS FOR  REACT NATIVE NAVIGATIONS
 
 npm install @react-navigation/native @react-navigation/native-stack
 npm install react-native-screens react-native-safe-area-context
+
+5. ADD THIS 
+I'll guide you through registering your Android app with Firebase step by step!
+📱 Step-by-Step Firebase Android Setup
+Step 1: Register App 🔐
+
+Go to Firebase Console
+Select your project (or create one)
+Click "Add app" → Select Android icon
+Fill in the registration form:
+
+Android package name:
+
+Open android/app/build.gradle and find applicationId
+It looks like: applicationId "com.yourcompany.yourapp"
+Copy this EXACT value (e.g., com.myapp.example)
+
+App nickname (optional):
+
+Give it a friendly name like "My App Android"
+
+Debug signing certificate SHA-1 (optional but recommended for Google Sign-In):
+Run this command in your terminal:
+bash# For Windows
+cd android && gradlew signingReport
+
+# For macOS/Linux
+cd android && ./gradlew signingReport
+```
+
+Copy the SHA-1 from the **debug** keystore and paste it.
+
+---
+
+### **Step 2: Download Config File** 📥
+
+1. Click **"Download google-services.json"**
+2. Move this file to: `android/app/google-services.json`
+
+**File structure should be:**
+```
+your-project/
+├── android/
+│   ├── app/
+│   │   ├── google-services.json  ← HERE
+│   │   ├── build.gradle
+│   │   └── src/
