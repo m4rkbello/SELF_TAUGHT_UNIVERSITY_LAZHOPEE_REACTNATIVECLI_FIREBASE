@@ -227,3 +227,6 @@ your-project/
 │   │   ├── google-services.json  ← HERE
 │   │   ├── build.gradle
 │   │   └── src/
+
+
+npm install firebase @react-native-google-signin/google-signin
