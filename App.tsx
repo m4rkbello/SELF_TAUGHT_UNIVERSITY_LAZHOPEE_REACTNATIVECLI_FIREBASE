@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { AuthProvider, useAuth } from './src/context/AuthContext';
  
 // Login Component
 const LoginScreen = ({ onNavigate }) => {
