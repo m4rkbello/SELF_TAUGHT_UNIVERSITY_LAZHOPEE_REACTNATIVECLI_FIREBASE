@@ -1,13 +1,20 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import { AuthProvider } from './src/context/AuthContext'; // ✅ Named import with {}
+import { AuthProvider } from './src/context/AuthContext';
+import { configureGoogleSignIn } from './src/firebase/auth';
 import LoginScreen from './src/screens/auth/LoginScreen';
-// Import your other screens here
 
 const Stack = createStackNavigator();
 
 function App() {
+  // Configure Google Sign-In IMMEDIATELY when app starts
+  useEffect(() => {
+    console.log('🔧 Configuring Google Sign-In...');
+    configureGoogleSignIn();
+    console.log('✅ Google Sign-In configured');
+  }, []);
+
   return (
     <AuthProvider>
       <NavigationContainer>
@@ -17,7 +24,6 @@ function App() {
             component={LoginScreen}
             options={{ headerShown: false }}
           />
-          {/* Add your other screens here */}
         </Stack.Navigator>
       </NavigationContainer>
     </AuthProvider>

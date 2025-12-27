@@ -14,10 +14,22 @@ import { GoogleSignin } from '@react-native-google-signin/google-signin';
 // Configure Google Sign-In
 // Call this once when your app starts (in App.js useEffect)
 export const configureGoogleSignIn = () => {
-  GoogleSignin.configure({
-    webClientId: '656684881970-web456.apps.googleusercontent.com', // Replace with YOUR actual Web Client ID
-    offlineAccess: false,
-  });
+  try {
+    // IMPORTANT: Replace with YOUR Web Client ID from google-services.json
+    // Look for "client_type": 3 in the oauth_client array
+    const webClientId = '656684881970-xxxxxxxxxxxxxxxxxxxxxxxxxx.apps.googleusercontent.com';
+    
+    GoogleSignin.configure({
+      webClientId: webClientId,
+      offlineAccess: false,
+    });
+    
+    console.log('✅ Google Sign-In configured with Web Client ID');
+    console.log('Web Client ID:', webClientId);
+  } catch (error) {
+    console.error('❌ Error configuring Google Sign-In:', error);
+    throw error;
+  }
 };
 
 // Sign up with email and password
