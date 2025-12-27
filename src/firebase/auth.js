@@ -4,11 +4,21 @@ import {
   signOut,
   onAuthStateChanged,
   GoogleAuthProvider,
-  signInWithPopup,
+  signInWithCredential,
   sendPasswordResetEmail,
   updateProfile
 } from 'firebase/auth';
 import { auth } from './config';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
+
+// Configure Google Sign-In
+// Call this once when your app starts (in App.js useEffect)
+export const configureGoogleSignIn = () => {
+  GoogleSignin.configure({
+    webClientId: '656684881970-web456.apps.googleusercontent.com', // Replace with YOUR actual Web Client ID
+    offlineAccess: false,
+  });
+};
 
 // Sign up with email and password
 export const signUpWithEmail = async (email, password, displayName) => {
@@ -50,21 +60,37 @@ export const signInWithEmail = async (email, password) => {
   }
 };
 
-// Sign in with Google
+// Sign in with Google - FIXED FOR REACT NATIVE
 export const signInWithGoogle = async () => {
   try {
-    const provider = new GoogleAuthProvider();
-    const result = await signInWithPopup(auth, provider);
+    // Check if device supports Google Play Services
+    await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+    
+    // Trigger Google Sign-In flow
+    const response = await GoogleSignin.signIn();
+    
+    // Get the ID token from the response
+    const idToken = response.data?.idToken;
+    
+    if (!idToken) {
+      throw new Error('No ID token found');
+    }
+    
+    // Create a Google credential with the token
+    const googleCredential = GoogleAuthProvider.credential(idToken);
+    
+    // Sign in to Firebase with the Google credential
+    const result = await signInWithCredential(auth, googleCredential);
     
     return {
       success: true,
-      user: result.user,
-      credential: GoogleAuthProvider.credentialFromResult(result)
+      user: result.user
     };
   } catch (error) {
+    console.error('Google Sign-In Error:', error);
     return {
       success: false,
-      error: error.message
+      error: error.message || 'Google Sign-In failed'
     };
   }
 };
@@ -73,6 +99,8 @@ export const signInWithGoogle = async () => {
 export const logOut = async () => {
   try {
     await signOut(auth);
+    // Also sign out from Google
+    await GoogleSignin.signOut();
     return { success: true };
   } catch (error) {
     return {

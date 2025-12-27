@@ -10,22 +10,63 @@ import {
   Platform,
   ScrollView,
   Dimensions,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
+import { useAuth } from '../../context/AuthContext';
 
 const { width, height } = Dimensions.get('window');
 
 function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  
+  // Get auth functions from context
+  const { signIn, googleSignIn, error } = useAuth();
 
-  const handleLogin = () => {
-    // Add your login logic here
-    console.log('Login:', email, password);
+  const handleLogin = async () => {
+    // Validation
+    if (!email || !password) {
+      Alert.alert('Error', 'Please enter both email and password');
+      return;
+    }
+
+    setLoading(true);
+    
+    try {
+      const result = await signIn(email, password);
+      
+      if (result.success) {
+        Alert.alert('Success', 'Login successful!');
+        // Navigation will be handled automatically by auth state change
+      } else {
+        Alert.alert('Login Failed', result.error || 'Invalid credentials');
+      }
+    } catch (err) {
+      Alert.alert('Error', err.message || 'Something went wrong');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleGoogleLogin = () => {
-    // Add your Google login logic here
-    console.log('Google Login');
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    
+    try {
+      const result = await googleSignIn();
+      
+      if (result.success) {
+        Alert.alert('Success', 'Google login successful!');
+        // Navigation will be handled automatically by auth state change
+      } else {
+        Alert.alert('Google Login Failed', result.error || 'Unable to sign in with Google');
+      }
+    } catch (err) {
+      Alert.alert('Error', err.message || 'Something went wrong');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -55,9 +96,10 @@ function LoginScreen({ navigation }) {
         <TouchableOpacity
           style={styles.googleButton}
           onPress={handleGoogleLogin}
+          disabled={loading}
         >
           <Image
-            source={require('../../assets/images/google.png')} // Add Google icon
+            source={require('../../assets/images/google.png')}
             style={styles.googleIcon}
           />
           <Text style={styles.googleButtonText}>Continue with Google</Text>
@@ -80,6 +122,7 @@ function LoginScreen({ navigation }) {
           keyboardType="email-address"
           autoCapitalize="none"
           autoCorrect={false}
+          editable={!loading}
         />
 
         {/* Password Input */}
@@ -91,17 +134,34 @@ function LoginScreen({ navigation }) {
           onChangeText={setPassword}
           secureTextEntry
           autoCapitalize="none"
+          editable={!loading}
         />
 
         {/* Forgot Password */}
-        <TouchableOpacity style={styles.forgotPassword}>
+        <TouchableOpacity 
+          style={styles.forgotPassword}
+          onPress={() => navigation.navigate('ForgotPassword')}
+        >
           <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
         </TouchableOpacity>
 
         {/* Login Button */}
-        <TouchableOpacity style={styles.button} onPress={handleLogin}>
-          <Text style={styles.buttonText}>Login</Text>
+        <TouchableOpacity 
+          style={[styles.button, loading && styles.buttonDisabled]} 
+          onPress={handleLogin}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>Login</Text>
+          )}
         </TouchableOpacity>
+
+        {/* Display Error if any */}
+        {error && (
+          <Text style={styles.errorText}>{error}</Text>
+        )}
 
         {/* Sign Up Link */}
         <View style={styles.signupContainer}>
@@ -130,8 +190,8 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: width * 0.08, // 8% of screen width
-    paddingVertical: height * 0.05, // 5% of screen height
+    paddingHorizontal: width * 0.08,
+    paddingVertical: height * 0.05,
     justifyContent: 'center',
   },
   logoContainer: {
@@ -139,12 +199,11 @@ const styles = StyleSheet.create({
     marginBottom: height * 0.03,
   },
   logo: {
-    width: width * 0.4, // 40% of screen width
+    width: width * 0.4,
     height: width * 0.4,
     maxWidth: 150,
     maxHeight: 150,
   },
-  // Use this if you don't have a logo image yet
   logoPlaceholder: {
     width: width * 0.4,
     height: width * 0.4,
@@ -161,7 +220,7 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   title: {
-    fontSize: width * 0.08, // Responsive font size
+    fontSize: width * 0.08,
     fontWeight: 'bold',
     textAlign: 'center',
     color: '#333',
@@ -240,10 +299,20 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     elevation: 5,
   },
+  buttonDisabled: {
+    backgroundColor: '#d4f599',
+    opacity: 0.7,
+  },
   buttonText: {
     color: '#fff',
     fontSize: width * 0.045,
     fontWeight: '600',
+  },
+  errorText: {
+    color: 'red',
+    textAlign: 'center',
+    marginTop: height * 0.02,
+    fontSize: width * 0.035,
   },
   signupContainer: {
     flexDirection: 'row',
