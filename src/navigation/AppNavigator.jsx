@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 // ✅ Make sure these imports are correct
 import LoginScreen from '../screens/auth/LoginScreen';
 import RegisterScreen from '../screens/auth/RegisterScreen'; // Check this path!
-import DashboardScreen from '../screens/main/DashboardScreen';
+import DashboardScreen from '../screens/home/Dashboard';
 
 const Stack = createNativeStackNavigator();
 
