@@ -12,7 +12,20 @@
           "package_name": "com.lazhopee"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "656684881970-q60iu5av33c034bdu7cg1qaj8ukl2dg6.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.lazhopee",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "656684881970-9bu6iidogjm9bbforsm5afbm44rra7v3.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBXMqv7fmnLN8NvybRAMdLKlhRHYiP0jXc"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "656684881970-9bu6iidogjm9bbforsm5afbm44rra7v3.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

@@ -1,190 +1,144 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect, useContext } from 'react';
 import { 
-  signUpWithEmail, 
   signInWithEmail, 
-  signInWithGoogle, 
+  signUpWithEmail, 
+  signInWithGoogle,
   logOut, 
-  observeAuthState 
+  observeAuthState,
+  resetPassword 
 } from '../firebase/auth';
-import { 
-  createUserProfile, 
-  getUserProfile, 
-  updateUserProfile 
-} from '../firebase/firestore';
 
-const AuthContext = createContext(null);
+const AuthContext = createContext();
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    console.log('👂 Setting up auth state listener...');
+    
+    // Listen to auth state changes
+    const unsubscribe = observeAuthState((user) => {
+      console.log('🔔 Auth state changed:', user ? user.email : 'No user');
+      setUser(user);
+      setLoading(false);
+    });
+
+    // Cleanup subscription on unmount
+    return unsubscribe;
+  }, []);
+
+  const signIn = async (email, password) => {
+    setError(null);
+    setLoading(true);
+    
+    console.log('🔵 Signing in with email:', email);
+    const result = await signInWithEmail(email, password);
+    
+    if (!result.success) {
+      console.error('❌ Sign in failed:', result.error);
+      setError(result.error);
+    } else {
+      console.log('✅ Sign in successful');
+    }
+    
+    setLoading(false);
+    return result;
+  };
+
+  const signUp = async (email, password, displayName) => {
+    setError(null);
+    setLoading(true);
+    
+    console.log('🔵 Signing up with email:', email);
+    const result = await signUpWithEmail(email, password, displayName);
+    
+    if (!result.success) {
+      console.error('❌ Sign up failed:', result.error);
+      setError(result.error);
+    } else {
+      console.log('✅ Sign up successful');
+    }
+    
+    setLoading(false);
+    return result;
+  };
+
+  const googleSignIn = async () => {
+    setError(null);
+    setLoading(true);
+    
+    console.log('🔵 Starting Google Sign-In...');
+    const result = await signInWithGoogle();
+    
+    if (!result.success) {
+      console.error('❌ Google Sign-In failed:', result.error);
+      setError(result.error);
+    } else {
+      console.log('✅ Google Sign-In successful:', result.user.email);
+    }
+    
+    setLoading(false);
+    return result;
+  };
+
+  const signOut = async () => {
+    setError(null);
+    setLoading(true);
+    
+    console.log('🔵 Signing out...');
+    const result = await logOut();
+    
+    if (!result.success) {
+      console.error('❌ Sign out failed:', result.error);
+      setError(result.error);
+    } else {
+      console.log('✅ Sign out successful');
+    }
+    
+    setLoading(false);
+    return result;
+  };
+
+  const forgotPassword = async (email) => {
+    setError(null);
+    
+    console.log('🔵 Sending password reset to:', email);
+    const result = await resetPassword(email);
+    
+    if (!result.success) {
+      console.error('❌ Password reset failed:', result.error);
+      setError(result.error);
+    } else {
+      console.log('✅ Password reset email sent');
+    }
+    
+    return result;
+  };
+
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        error,
+        signIn,
+        signUp,
+        googleSignIn,
+        signOut,
+        forgotPassword,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+};
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within AuthProvider');
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-};
-
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [userProfile, setUserProfile] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  // Listen to auth state changes
-  useEffect(() => {
-    const unsubscribe = observeAuthState(async (firebaseUser) => {
-      if (firebaseUser) {
-        setUser(firebaseUser);
-        
-        // Fetch user profile from Firestore
-        const profileResult = await getUserProfile(firebaseUser.uid);
-        if (profileResult.success) {
-          setUserProfile(profileResult.data);
-        }
-      } else {
-        setUser(null);
-        setUserProfile(null);
-      }
-      setLoading(false);
-    });
-
-    return unsubscribe;
-  }, []);
-
-  // Sign up function
-  const signUp = async (email, password, displayName, userType = 'user') => {
-    try {
-      setError(null);
-      const result = await signUpWithEmail(email, password, displayName);
-      
-      if (result.success) {
-        // Create user profile in Firestore
-        const profileData = {
-          uid: result.user.uid,
-          email: result.user.email,
-          displayName: displayName || result.user.email.split('@')[0],
-          userType: userType,
-          photoURL: result.user.photoURL || null,
-          createdAt: new Date().toISOString()
-        };
-        
-        await createUserProfile(result.user.uid, profileData);
-        setUserProfile(profileData);
-        
-        return { success: true, user: result.user };
-      } else {
-        setError(result.error);
-        return { success: false, error: result.error };
-      }
-    } catch (err) {
-      setError(err.message);
-      return { success: false, error: err.message };
-    }
-  };
-
-  // Sign in function
-  const signIn = async (email, password) => {
-    try {
-      setError(null);
-      const result = await signInWithEmail(email, password);
-      
-      if (result.success) {
-        return { success: true, user: result.user };
-      } else {
-        setError(result.error);
-        return { success: false, error: result.error };
-      }
-    } catch (err) {
-      setError(err.message);
-      return { success: false, error: err.message };
-    }
-  };
-
-  // Google sign in function
-  const googleSignIn = async () => {
-    try {
-      setError(null);
-      const result = await signInWithGoogle();
-      
-      if (result.success) {
-        // Check if user profile exists
-        const profileResult = await getUserProfile(result.user.uid);
-        
-        if (!profileResult.success) {
-          // Create profile if it doesn't exist
-          const profileData = {
-            uid: result.user.uid,
-            email: result.user.email,
-            displayName: result.user.displayName,
-            userType: 'user',
-            photoURL: result.user.photoURL,
-            provider: 'google',
-            createdAt: new Date().toISOString()
-          };
-          
-          await createUserProfile(result.user.uid, profileData);
-          setUserProfile(profileData);
-        }
-        
-        return { success: true, user: result.user };
-      } else {
-        setError(result.error);
-        return { success: false, error: result.error };
-      }
-    } catch (err) {
-      setError(err.message);
-      return { success: false, error: err.message };
-    }
-  };
-
-  // Sign out function
-  const signOut = async () => {
-    try {
-      setError(null);
-      await logOut();
-      setUser(null);
-      setUserProfile(null);
-      return { success: true };
-    } catch (err) {
-      setError(err.message);
-      return { success: false, error: err.message };
-    }
-  };
-
-  // Update profile function
-  const updateProfile = async (updates) => {
-    try {
-      setError(null);
-      if (!user) throw new Error('No user logged in');
-      
-      const result = await updateUserProfile(user.uid, updates);
-      
-      if (result.success) {
-        setUserProfile({ ...userProfile, ...updates });
-        return { success: true };
-      } else {
-        setError(result.error);
-        return { success: false, error: result.error };
-      }
-    } catch (err) {
-      setError(err.message);
-      return { success: false, error: err.message };
-    }
-  };
-
-  const value = {
-    user,
-    userProfile,
-    loading,
-    error,
-    signUp,
-    signIn,
-    googleSignIn,
-    signOut,
-    updateProfile
-  };
-
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
 };

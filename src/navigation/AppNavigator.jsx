@@ -1,28 +1,36 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import AuthNavigation from './AuthNavigator';
-// Import your main app screens here
-// import HomeScreen from '../screens/HomeScreen';
+import { useAuth } from '../context/AuthContext';
+
+// ✅ Make sure these imports are correct
+import LoginScreen from '../screens/auth/LoginScreen';
+import RegisterScreen from '../screens/auth/RegisterScreen'; // Check this path!
+import DashboardScreen from '../screens/main/DashboardScreen';
 
 const Stack = createNativeStackNavigator();
 
-function AppNavigation() {
-  // You can add authentication state management here
-  const isAuthenticated = false; // Replace with actual auth state
+function AppNavigator() {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return null;
+  }
 
   return (
     <NavigationContainer>
-      {!isAuthenticated ? (
-        <AuthNavigation />
-      ) : (
-        <Stack.Navigator>
-          {/* Add your authenticated screens here */}
-          {/* <Stack.Screen name="Home" component={HomeScreen} /> */}
-        </Stack.Navigator>
-      )}
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        {user ? (
+          <Stack.Screen name="Dashboard" component={DashboardScreen} />
+        ) : (
+          <>
+            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="Register" component={RegisterScreen} />
+          </>
+        )}
+      </Stack.Navigator>
     </NavigationContainer>
   );
 }
 
-export default AppNavigation;
+export default AppNavigator;

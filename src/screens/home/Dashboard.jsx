@@ -1,223 +1,334 @@
-const Dashboard = () => {
-  const { user, userProfile, signOut, updateProfile } = useAuth();
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(false);
+import React from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  ScrollView,
+  Dimensions,
+  Alert,
+} from 'react-native';
+import { useAuth } from '../../context/AuthContext';
 
-  const loadUsers = async () => {
-    setLoading(true);
-    const result = await getAllDocuments('users');
-    if (result.success) {
-      setUsers(result.data);
-    }
-    setLoading(false);
-  };
+const { width, height } = Dimensions.get('window');
+
+function DashboardScreen({ navigation }) {
+  const { user, signOut } = useAuth();
 
   const handleLogout = async () => {
-    await signOut();
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Logout',
+          onPress: async () => {
+            const result = await signOut();
+            if (result.success) {
+              // Navigation will be handled by auth state change
+              Alert.alert('Success', 'Logged out successfully');
+            } else {
+              Alert.alert('Error', result.error || 'Failed to logout');
+            }
+          },
+          style: 'destructive',
+        },
+      ]
+    );
   };
 
   return (
-    <div style={styles.dashboard}>
-      <div style={styles.header}>
-        <h1>Dashboard</h1>
-        <button onClick={handleLogout} style={styles.logoutButton}>
-          Logout
-        </button>
-      </div>
-      
-      <div style={styles.profileCard}>
-        <h2>Welcome, {userProfile?.displayName}!</h2>
-        <p><strong>Email:</strong> {user?.email}</p>
-        <p><strong>User Type:</strong> {userProfile?.userType}</p>
-        <p><strong>UID:</strong> {user?.uid}</p>
-      </div>
-      
-      <div style={styles.section}>
-        <div style={styles.sectionHeader}>
-          <h3>All Users</h3>
-          <button onClick={loadUsers} style={styles.refreshButton}>
-            {loading ? 'Loading...' : 'Refresh'}
-          </button>
-        </div>
-        
-        {users.length === 0 ? (
-          <p>No users found. Click refresh to load.</p>
+    <ScrollView style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Dashboard</Text>
+        <TouchableOpacity
+          style={styles.logoutButton}
+          onPress={handleLogout}
+        >
+          <Text style={styles.logoutText}>Logout</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* User Profile Card */}
+      <View style={styles.profileCard}>
+        {user?.photoURL ? (
+          <Image
+            source={{ uri: user.photoURL }}
+            style={styles.profileImage}
+          />
         ) : (
-          <div style={styles.userList}>
-            {users.map((u) => (
-              <div key={u.id} style={styles.userCard}>
-                <p><strong>{u.displayName}</strong></p>
-                <p>{u.email}</p>
-                <p style={styles.userType}>{u.userType}</p>
-              </div>
-            ))}
-          </div>
+          <View style={styles.profileImagePlaceholder}>
+            <Text style={styles.profileImageText}>
+              {user?.displayName?.charAt(0) || user?.email?.charAt(0) || 'U'}
+            </Text>
+          </View>
         )}
-      </div>
-    </div>
-  );
-};
 
-// Main App Component
-const AppContent = () => {
-  const { user, loading } = useAuth();
-  const [screen, setScreen] = useState('login');
+        <Text style={styles.displayName}>
+          {user?.displayName || 'User'}
+        </Text>
+        <Text style={styles.email}>{user?.email}</Text>
 
-  if (loading) {
-    return (
-      <div style={styles.loading}>
-        <h2>Loading...</h2>
-      </div>
-    );
-  }
+        {/* Authentication Provider Badge */}
+        <View style={styles.providerBadge}>
+          <Text style={styles.providerText}>
+            {user?.providerData?.[0]?.providerId === 'google.com'
+              ? '🔐 Signed in with Google'
+              : '📧 Signed in with Email'}
+          </Text>
+        </View>
+      </View>
 
-  if (user) {
-    return <Dashboard />;
-  }
+      {/* User Information Card */}
+      <View style={styles.infoCard}>
+        <Text style={styles.cardTitle}>Account Information</Text>
 
-  return screen === 'login' ? (
-    <LoginScreen onNavigate={setScreen} />
-  ) : (
-    <SignupScreen onNavigate={setScreen} />
-  );
-};
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>User ID:</Text>
+          <Text style={styles.infoValue} numberOfLines={1}>
+            {user?.uid}
+          </Text>
+        </View>
 
-// Main App with Provider
-export default function App() {
-  return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>Email:</Text>
+          <Text style={styles.infoValue}>{user?.email}</Text>
+        </View>
+
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>Display Name:</Text>
+          <Text style={styles.infoValue}>
+            {user?.displayName || 'Not set'}
+          </Text>
+        </View>
+
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>Email Verified:</Text>
+          <Text style={[
+            styles.infoValue,
+            user?.emailVerified ? styles.verified : styles.notVerified
+          ]}>
+            {user?.emailVerified ? '✓ Verified' : '✗ Not Verified'}
+          </Text>
+        </View>
+
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>Account Created:</Text>
+          <Text style={styles.infoValue}>
+            {user?.metadata?.creationTime
+              ? new Date(user.metadata.creationTime).toLocaleDateString()
+              : 'N/A'}
+          </Text>
+        </View>
+
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>Last Sign In:</Text>
+          <Text style={styles.infoValue}>
+            {user?.metadata?.lastSignInTime
+              ? new Date(user.metadata.lastSignInTime).toLocaleString()
+              : 'N/A'}
+          </Text>
+        </View>
+
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>Provider:</Text>
+          <Text style={styles.infoValue}>
+            {user?.providerData?.[0]?.providerId || 'Unknown'}
+          </Text>
+        </View>
+      </View>
+
+      {/* Action Buttons */}
+      <View style={styles.actionsCard}>
+        <Text style={styles.cardTitle}>Quick Actions</Text>
+
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() => Alert.alert('Feature', 'Edit profile coming soon!')}
+        >
+          <Text style={styles.actionButtonText}>✏️ Edit Profile</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() => Alert.alert('Feature', 'Settings coming soon!')}
+        >
+          <Text style={styles.actionButtonText}>⚙️ Settings</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() => Alert.alert('Feature', 'Help & Support coming soon!')}
+        >
+          <Text style={styles.actionButtonText}>❓ Help & Support</Text>
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
   );
 }
 
-// Styles
-const styles = {
+const styles = StyleSheet.create({
   container: {
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    minHeight: '100vh',
+    flex: 1,
     backgroundColor: '#f5f5f5',
-    padding: '20px'
-  },
-  card: {
-    backgroundColor: 'white',
-    padding: '40px',
-    borderRadius: '10px',
-    boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-    width: '100%',
-    maxWidth: '400px'
-  },
-  input: {
-    width: '100%',
-    padding: '12px',
-    marginBottom: '15px',
-    border: '1px solid #ddd',
-    borderRadius: '5px',
-    fontSize: '16px',
-    boxSizing: 'border-box'
-  },
-  button: {
-    width: '100%',
-    padding: '12px',
-    backgroundColor: '#007bff',
-    color: 'white',
-    border: 'none',
-    borderRadius: '5px',
-    fontSize: '16px',
-    cursor: 'pointer',
-    marginBottom: '10px'
-  },
-  googleButton: {
-    width: '100%',
-    padding: '12px',
-    backgroundColor: '#DB4437',
-    color: 'white',
-    border: 'none',
-    borderRadius: '5px',
-    fontSize: '16px',
-    cursor: 'pointer',
-    marginBottom: '15px'
-  },
-  link: {
-    color: '#007bff',
-    cursor: 'pointer',
-    textDecoration: 'underline'
-  },
-  error: {
-    backgroundColor: '#ffebee',
-    color: '#c62828',
-    padding: '10px',
-    borderRadius: '5px',
-    marginBottom: '15px'
-  },
-  dashboard: {
-    padding: '20px',
-    maxWidth: '1200px',
-    margin: '0 auto'
   },
   header: {
-    display: 'flex',
+    flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: '30px'
+    paddingHorizontal: width * 0.05,
+    paddingVertical: height * 0.02,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  headerTitle: {
+    fontSize: width * 0.06,
+    fontWeight: 'bold',
+    color: '#333',
   },
   logoutButton: {
-    padding: '10px 20px',
-    backgroundColor: '#dc3545',
-    color: 'white',
-    border: 'none',
-    borderRadius: '5px',
-    cursor: 'pointer'
+    backgroundColor: '#ff4444',
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  logoutText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: width * 0.035,
   },
   profileCard: {
-    backgroundColor: 'white',
-    padding: '20px',
-    borderRadius: '10px',
-    boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
-    marginBottom: '30px'
-  },
-  section: {
-    backgroundColor: 'white',
-    padding: '20px',
-    borderRadius: '10px',
-    boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
-  },
-  sectionHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
+    backgroundColor: '#fff',
+    margin: width * 0.05,
+    padding: width * 0.05,
+    borderRadius: 15,
     alignItems: 'center',
-    marginBottom: '20px'
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  refreshButton: {
-    padding: '8px 16px',
-    backgroundColor: '#28a745',
-    color: 'white',
-    border: 'none',
-    borderRadius: '5px',
-    cursor: 'pointer'
+  profileImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    marginBottom: 15,
+    borderWidth: 3,
+    borderColor: '#b1fd03',
   },
-  userList: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
-    gap: '15px'
-  },
-  userCard: {
-    padding: '15px',
-    border: '1px solid #ddd',
-    borderRadius: '5px',
-    backgroundColor: '#f9f9f9'
-  },
-  userType: {
-    color: '#666',
-    fontSize: '14px',
-    marginTop: '5px'
-  },
-  loading: {
-    display: 'flex',
+  profileImagePlaceholder: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#b1fd03',
     justifyContent: 'center',
     alignItems: 'center',
-    minHeight: '100vh'
-  }
-};
+    marginBottom: 15,
+  },
+  profileImageText: {
+    fontSize: 40,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  displayName: {
+    fontSize: width * 0.055,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 5,
+  },
+  email: {
+    fontSize: width * 0.04,
+    color: '#666',
+    marginBottom: 15,
+  },
+  providerBadge: {
+    backgroundColor: '#e8f5e9',
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  providerText: {
+    fontSize: width * 0.035,
+    color: '#2e7d32',
+    fontWeight: '600',
+  },
+  infoCard: {
+    backgroundColor: '#fff',
+    marginHorizontal: width * 0.05,
+    marginBottom: width * 0.05,
+    padding: width * 0.05,
+    borderRadius: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  cardTitle: {
+    fontSize: width * 0.05,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 15,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  infoLabel: {
+    fontSize: width * 0.04,
+    color: '#666',
+    fontWeight: '600',
+    flex: 1,
+  },
+  infoValue: {
+    fontSize: width * 0.04,
+    color: '#333',
+    flex: 1,
+    textAlign: 'right',
+  },
+  verified: {
+    color: '#4caf50',
+    fontWeight: '600',
+  },
+  notVerified: {
+    color: '#ff9800',
+    fontWeight: '600',
+  },
+  actionsCard: {
+    backgroundColor: '#fff',
+    marginHorizontal: width * 0.05,
+    marginBottom: width * 0.1,
+    padding: width * 0.05,
+    borderRadius: 15,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  actionButton: {
+    backgroundColor: '#f5f5f5',
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  actionButtonText: {
+    fontSize: width * 0.04,
+    color: '#333',
+    fontWeight: '600',
+  },
+});
+
+export default DashboardScreen;
