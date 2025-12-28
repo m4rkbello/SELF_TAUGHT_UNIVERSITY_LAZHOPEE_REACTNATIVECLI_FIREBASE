@@ -11,12 +11,9 @@ import {
 import { auth } from './config';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
-// Configure Google Sign-In
-// Call this once when your app starts (in App.js useEffect)
 export const configureGoogleSignIn = () => {
   try {
-    // IMPORTANT: Replace with YOUR Web Client ID from google-services.json
-    // Look for "client_type": 3 in the oauth_client array
+
     const webClientId = '656684881970-xxxxxxxxxxxxxxxxxxxxxxxxxx.apps.googleusercontent.com';
     
     GoogleSignin.configure({
