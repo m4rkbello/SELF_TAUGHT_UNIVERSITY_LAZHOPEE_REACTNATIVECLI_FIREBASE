@@ -14,51 +14,72 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [authReady, setAuthReady] = useState(false);
 
   useEffect(() => {
-    console.log('👂 Setting up auth state listener...');
+    console.log('👂 AuthProvider: Setting up auth state listener...');
     
-    // Listen to auth state changes
-    const unsubscribe = observeAuthState((user) => {
-      console.log('🔔 Auth state changed:', user ? user.email : 'No user');
-      setUser(user);
-      setLoading(false);
-    });
+    const initTimeout = setTimeout(() => {
+      // Listen to auth state changes
+      const unsubscribe = observeAuthState((user) => {
+        console.log('🔔 AuthProvider: Auth state changed:', user ? user.email : 'No user');
+        setUser(user);
+        setLoading(false);
+        setAuthReady(true);
+      });
 
-    // Cleanup subscription on unmount
-    return unsubscribe;
+      // Cleanup subscription on unmount
+      return () => {
+        console.log('👋 AuthProvider: Cleaning up auth listener');
+        unsubscribe();
+      };
+    }, 1000);
+
+    return () => clearTimeout(initTimeout);
   }, []);
 
   const signIn = async (email, password) => {
+    if (!authReady) {
+      console.error('❌ Auth not ready yet');
+      return { success: false, error: 'Authentication service is initializing, please wait...' };
+    }
+    
     setError(null);
     setLoading(true);
     
-    console.log('🔵 Signing in with email:', email);
+    console.log('🔵 AuthProvider: Signing in with email:', email);
     const result = await signInWithEmail(email, password);
     
     if (!result.success) {
-      console.error('❌ Sign in failed:', result.error);
+      console.error('❌ AuthProvider: Sign in failed:', result.error);
       setError(result.error);
     } else {
-      console.log('✅ Sign in successful');
+      console.log('✅ AuthProvider: Sign in successful');
+      setUser(result.user);
     }
     
     setLoading(false);
     return result;
   };
 
-  const signUp = async (email, password, displayName) => {
+  const signUp = async (email, password, userData) => {
+    if (!authReady) {
+      console.error('❌ Auth not ready yet');
+      return { success: false, error: 'Authentication service is initializing, please wait...' };
+    }
+    
     setError(null);
     setLoading(true);
     
-    console.log('🔵 Signing up with email:', email);
-    const result = await signUpWithEmail(email, password, displayName);
+    console.log('🔵 AuthProvider: Signing up with email:', email);
+    const result = await signUpWithEmail(email, password, userData);
     
     if (!result.success) {
-      console.error('❌ Sign up failed:', result.error);
+      console.error('❌ AuthProvider: Sign up failed:', result.error);
       setError(result.error);
     } else {
-      console.log('✅ Sign up successful');
+      console.log('✅ AuthProvider: Sign up successful');
+      setUser(result.user);
     }
     
     setLoading(false);
@@ -66,17 +87,23 @@ export const AuthProvider = ({ children }) => {
   };
 
   const googleSignIn = async () => {
+    if (!authReady) {
+      console.error('❌ Auth not ready yet');
+      return { success: false, error: 'Authentication service is initializing, please wait...' };
+    }
+    
     setError(null);
     setLoading(true);
     
-    console.log('🔵 Starting Google Sign-In...');
+    console.log('🔵 AuthProvider: Starting Google Sign-In...');
     const result = await signInWithGoogle();
     
     if (!result.success) {
-      console.error('❌ Google Sign-In failed:', result.error);
+      console.error('❌ AuthProvider: Google Sign-In failed:', result.error);
       setError(result.error);
     } else {
-      console.log('✅ Google Sign-In successful:', result.user.email);
+      console.log('✅ AuthProvider: Google Sign-In successful:', result.user.email);
+      setUser(result.user);
     }
     
     setLoading(false);
@@ -84,17 +111,23 @@ export const AuthProvider = ({ children }) => {
   };
 
   const signOut = async () => {
+    if (!authReady) {
+      console.error('❌ Auth not ready yet');
+      return { success: false, error: 'Authentication service is initializing, please wait...' };
+    }
+    
     setError(null);
     setLoading(true);
     
-    console.log('🔵 Signing out...');
+    console.log('🔵 AuthProvider: Signing out...');
     const result = await logOut();
     
     if (!result.success) {
-      console.error('❌ Sign out failed:', result.error);
+      console.error('❌ AuthProvider: Sign out failed:', result.error);
       setError(result.error);
     } else {
-      console.log('✅ Sign out successful');
+      console.log('✅ AuthProvider: Sign out successful');
+      setUser(null);
     }
     
     setLoading(false);
@@ -102,16 +135,21 @@ export const AuthProvider = ({ children }) => {
   };
 
   const forgotPassword = async (email) => {
+    if (!authReady) {
+      console.error('❌ Auth not ready yet');
+      return { success: false, error: 'Authentication service is initializing, please wait...' };
+    }
+    
     setError(null);
     
-    console.log('🔵 Sending password reset to:', email);
+    console.log('🔵 AuthProvider: Sending password reset to:', email);
     const result = await resetPassword(email);
     
     if (!result.success) {
-      console.error('❌ Password reset failed:', result.error);
+      console.error('❌ AuthProvider: Password reset failed:', result.error);
       setError(result.error);
     } else {
-      console.log('✅ Password reset email sent');
+      console.log('✅ AuthProvider: Password reset email sent');
     }
     
     return result;
@@ -123,6 +161,7 @@ export const AuthProvider = ({ children }) => {
         user,
         loading,
         error,
+        authReady,
         signIn,
         signUp,
         googleSignIn,

@@ -1,234 +1,252 @@
 // firebase/auth.js
 import { 
-  signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
+  sendPasswordResetEmail,
   GoogleAuthProvider,
   signInWithCredential,
-  sendPasswordResetEmail,
-  updateProfile
+  updateProfile,
+  getReactNativePersistence
 } from 'firebase/auth';
-import { auth } from './config';
-import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
+import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { initializeAuth } from 'firebase/auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { app, db } from './config';  // Import app and db from config
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
-// Configure Google Sign-In with YOUR ACTUAL Web Client ID
-export const configureGoogleSignIn = () => {
-  try {
-    // ✅ THIS IS YOUR ACTUAL WEB CLIENT ID from google-services.json
-    const webClientId = '656684881970-9bu6iidogjm9bbforsm5afbm44rra7v3.apps.googleusercontent.com';
-    
-    GoogleSignin.configure({
-      webClientId: webClientId,
-      offlineAccess: true, // Changed to true for better token handling
-      forceCodeForRefreshToken: true, // Helps get fresh tokens
+// 🔥 CRITICAL: Initialize auth here to avoid circular dependency
+let auth;
+
+// Initialize auth if it's not already initialized
+try {
+  if (app) {
+    auth = initializeAuth(app, {
+      persistence: getReactNativePersistence(AsyncStorage)
     });
-    
-    console.log('✅ Google Sign-In configured successfully');
-    console.log('📱 Web Client ID:', webClientId);
-  } catch (error) {
-    console.error('❌ Error configuring Google Sign-In:', error);
-    throw error;
+    console.log('✅ Auth initialized in auth.js');
+  } else {
+    console.error('❌ App not initialized');
   }
+} catch (error) {
+  console.error('❌ Error initializing auth in auth.js:', error);
+}
+
+// Configure Google SignIn
+GoogleSignin.configure({
+  webClientId: '656684881970-9bu6iidogjm9bbforsm5afbm44rra7v3.apps.googleusercontent.com',
+});
+
+// Helper function to ensure auth is initialized
+const getAuth = () => {
+  if (!auth) {
+    console.error('❌ Auth is not initialized!');
+    throw new Error('Authentication service is not available');
+  }
+  return auth;
 };
 
-// Sign up with email and password
-export const signUpWithEmail = async (email, password, displayName) => {
+// Export functions that use auth and db
+export const signUpWithEmail = async (email, password, userData) => {
   try {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    console.log('🔵 Creating user account...');
     
-    // Update profile with display name
-    if (displayName) {
-      await updateProfile(userCredential.user, {
-        displayName: displayName
-      });
-    }
+    const currentAuth = getAuth();
     
-    return {
-      success: true,
-      user: userCredential.user
+    const userCredential = await createUserWithEmailAndPassword(currentAuth, email, password);
+    const user = userCredential.user;
+
+    console.log('✅ Auth account created:', user.uid);
+
+    const displayName = `${userData.firstName} ${userData.lastName}`;
+    await updateProfile(user, { displayName });
+
+    const userDocData = {
+      firstName: userData.firstName,
+      middleName: userData.middleName || '',
+      lastName: userData.lastName,
+      email: email.toLowerCase(),
+      contactNo: userData.contactNo,
+      displayName,
+      createdAt: serverTimestamp(),
+      provider: 'email',
+      uid: user.uid
     };
+
+    await setDoc(doc(db, 'users', user.uid), userDocData);
+    console.log('✅ User data saved to Firestore');
+
+    return { success: true, user: { uid: user.uid, email: user.email, ...userDocData } };
   } catch (error) {
-    console.error('Sign up error:', error);
-    return {
-      success: false,
-      error: getErrorMessage(error.code)
-    };
+    console.error('❌ Sign up error:', error);
+    let errorMessage = 'Registration failed';
+    switch (error.code) {
+      case 'auth/email-already-in-use':
+        errorMessage = 'This email is already registered. Please login instead.';
+        break;
+      case 'auth/invalid-email':
+        errorMessage = 'Invalid email address format.';
+        break;
+      case 'auth/weak-password':
+        errorMessage = 'Password must be at least 6 characters long.';
+        break;
+      case 'auth/network-request-failed':
+        errorMessage = 'Network error. Please check your connection.';
+        break;
+      case 'auth/operation-not-allowed':
+        errorMessage = 'Email/password sign-up is not enabled. Please contact support.';
+        break;
+      default:
+        errorMessage = error.message || 'Registration failed';
+    }
+    return { success: false, error: errorMessage };
   }
 };
 
-// Sign in with email and password
 export const signInWithEmail = async (email, password) => {
   try {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    return {
-      success: true,
-      user: userCredential.user
-    };
+    console.log('🔵 Signing in with email...');
+    
+    const currentAuth = getAuth();
+    
+    const userCredential = await signInWithEmailAndPassword(currentAuth, email, password);
+    const user = userCredential.user;
+
+    const userDoc = await getDoc(doc(db, 'users', user.uid));
+    const userData = userDoc.exists() ? userDoc.data() : { displayName: user.displayName };
+
+    console.log('✅ Sign in successful');
+    return { success: true, user: { uid: user.uid, email: user.email, ...userData } };
   } catch (error) {
-    console.error('Sign in error:', error);
-    return {
-      success: false,
-      error: getErrorMessage(error.code)
-    };
+    console.error('❌ Sign in error:', error);
+    let errorMessage = 'Login failed';
+    switch (error.code) {
+      case 'auth/user-not-found':
+      case 'auth/wrong-password':
+      case 'auth/invalid-credential':
+        errorMessage = 'Invalid email or password.';
+        break;
+      case 'auth/invalid-email':
+        errorMessage = 'Invalid email address format.';
+        break;
+      case 'auth/user-disabled':
+        errorMessage = 'This account has been disabled.';
+        break;
+      case 'auth/too-many-requests':
+        errorMessage = 'Too many failed attempts. Please try again later.';
+        break;
+      default:
+        errorMessage = error.message || 'Login failed';
+    }
+    return { success: false, error: errorMessage };
   }
 };
 
-// Sign in with Google - COMPLETE FIXED VERSION
 export const signInWithGoogle = async () => {
   try {
     console.log('🔵 Starting Google Sign-In...');
-    
-    // Step 1: Check if device supports Google Play Services
-    await GoogleSignin.hasPlayServices({ 
-      showPlayServicesUpdateDialog: true 
-    });
-    console.log('✅ Google Play Services available');
-    
-    // Step 2: Trigger Google Sign-In flow
-    console.log('🔵 Opening Google Sign-In dialog...');
-    const userInfo = await GoogleSignin.signIn();
-    console.log('✅ User signed in:', userInfo.user?.email);
-    
-    // Step 3: Get the ID token - TRY MULTIPLE WAYS
-    let idToken = null;
-    
-    // Try method 1: From userInfo.data
-    if (userInfo.data?.idToken) {
-      idToken = userInfo.data.idToken;
-      console.log('✅ Got ID token from userInfo.data');
-    }
-    // Try method 2: From userInfo directly
-    else if (userInfo.idToken) {
-      idToken = userInfo.idToken;
-      console.log('✅ Got ID token from userInfo');
-    }
-    // Try method 3: Get tokens separately
-    else {
-      console.log('🔵 Trying to get tokens separately...');
-      const tokens = await GoogleSignin.getTokens();
-      idToken = tokens.idToken;
-      console.log('✅ Got ID token from getTokens()');
-    }
-    
-    // Check if we got the token
-    if (!idToken) {
-      console.error('❌ No ID token found in response');
-      console.log('Full response:', JSON.stringify(userInfo, null, 2));
-      throw new Error('No ID token found. Please try again.');
-    }
-    
-    console.log('✅ ID Token obtained:', idToken.substring(0, 20) + '...');
-    
-    // Step 4: Create a Google credential with the token
+    await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+    const { idToken } = await GoogleSignin.signIn();
+
+    const currentAuth = getAuth();
     const googleCredential = GoogleAuthProvider.credential(idToken);
-    console.log('✅ Google credential created');
-    
-    // Step 5: Sign in to Firebase with the Google credential
-    console.log('🔵 Signing in to Firebase...');
-    const result = await signInWithCredential(auth, googleCredential);
-    console.log('✅ Firebase sign-in successful!');
-    console.log('👤 User:', result.user.email);
-    
-    return {
-      success: true,
-      user: result.user
-    };
-  } catch (error) {
-    console.error('❌ Google Sign-In Error:', error);
-    console.error('Error code:', error.code);
-    console.error('Error message:', error.message);
-    
-    // Handle specific error codes
-    if (error.code === statusCodes.SIGN_IN_CANCELLED) {
-      return {
-        success: false,
-        error: 'Sign in was cancelled'
+    const result = await signInWithCredential(currentAuth, googleCredential);
+    const user = result.user;
+
+    const userDoc = await getDoc(doc(db, 'users', user.uid));
+
+    if (!userDoc.exists()) {
+      const nameParts = user.displayName?.split(' ') || [];
+      const userData = {
+        firstName: nameParts[0] || '',
+        middleName: '',
+        lastName: nameParts.slice(1).join(' ') || '',
+        email: user.email,
+        contactNo: user.phoneNumber || '',
+        displayName: user.displayName,
+        photoURL: user.photoURL,
+        createdAt: serverTimestamp(),
+        provider: 'google',
+        uid: user.uid
       };
-    } else if (error.code === statusCodes.IN_PROGRESS) {
-      return {
-        success: false,
-        error: 'Sign in is already in progress'
-      };
-    } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-      return {
-        success: false,
-        error: 'Google Play Services not available or outdated'
-      };
+      await setDoc(doc(db, 'users', user.uid), userData);
+      return { success: true, user: { uid: user.uid, email: user.email, ...userData } };
     }
-    
-    return {
-      success: false,
-      error: error.message || 'Google Sign-In failed. Please try again.'
-    };
+
+    const userData = userDoc.data();
+    return { success: true, user: { uid: user.uid, email: user.email, ...userData } };
+  } catch (error) {
+    console.error('❌ Google Sign-In error:', error);
+    let errorMessage = 'Google Sign-In failed';
+    if (error.code === 'CANCELED') errorMessage = 'Sign-in cancelled.';
+    return { success: false, error: errorMessage || 'Google Sign-In failed' };
   }
 };
 
-// Sign out
 export const logOut = async () => {
   try {
-    await signOut(auth);
-    
-    // Also sign out from Google
-    const isSignedIn = await GoogleSignin.isSignedIn();
-    if (isSignedIn) {
-      await GoogleSignin.signOut();
-    }
-    
-    return { 
-      success: true,
-      message: 'Signed out successfully'
-    };
+    console.log('🔵 Logging out...');
+    const currentAuth = getAuth();
+    await signOut(currentAuth);
+    console.log('✅ Logout successful');
+    return { success: true };
   } catch (error) {
-    console.error('Sign out error:', error);
-    return {
-      success: false,
-      error: error.message
-    };
+    console.error('❌ Logout error:', error);
+    return { success: false, error: error.message || 'Logout failed' };
   }
 };
 
-// Password reset
+export const observeAuthState = (callback) => {
+  try {
+    const currentAuth = getAuth();
+    
+    console.log('👂 Setting up auth state listener...');
+    return onAuthStateChanged(currentAuth, async (firebaseUser) => {
+      console.log('🔔 Auth state changed:', firebaseUser ? firebaseUser.email : 'No user');
+      if (firebaseUser) {
+        try {
+          const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+          const userData = userDoc.exists() ? userDoc.data() : { displayName: firebaseUser.displayName };
+          callback({ uid: firebaseUser.uid, email: firebaseUser.email, ...userData });
+        } catch (error) {
+          console.error('❌ Error fetching user data:', error);
+          callback({ uid: firebaseUser.uid, email: firebaseUser.email, displayName: firebaseUser.displayName });
+        }
+      } else {
+        callback(null);
+      }
+    });
+  } catch (error) {
+    console.error('❌ Error setting up auth listener:', error);
+    // Return empty unsubscribe function
+    return () => {};
+  }
+};
+
 export const resetPassword = async (email) => {
   try {
-    await sendPasswordResetEmail(auth, email);
-    return { 
-      success: true,
-      message: 'Password reset email sent!'
-    };
+    const currentAuth = getAuth();
+    await sendPasswordResetEmail(currentAuth, email);
+    return { success: true };
   } catch (error) {
-    console.error('Password reset error:', error);
-    return {
-      success: false,
-      error: getErrorMessage(error.code)
-    };
+    let errorMessage = 'Failed to send reset email';
+    switch (error.code) {
+      case 'auth/user-not-found':
+        errorMessage = 'No account found with this email address.';
+        break;
+      case 'auth/invalid-email':
+        errorMessage = 'Invalid email address format.';
+        break;
+      case 'auth/too-many-requests':
+        errorMessage = 'Too many requests. Please try again later.';
+        break;
+      default:
+        errorMessage = error.message || 'Failed to send reset email';
+    }
+    return { success: false, error: errorMessage };
   }
 };
 
-// Auth state observer
-export const observeAuthState = (callback) => {
-  return onAuthStateChanged(auth, callback);
-};
-
-// Get current user
-export const getCurrentUser = () => {
-  return auth.currentUser;
-};
-
-// Helper function to get user-friendly error messages
-const getErrorMessage = (errorCode) => {
-  const errorMessages = {
-    'auth/email-already-in-use': 'This email is already registered.',
-    'auth/invalid-email': 'Invalid email address.',
-    'auth/operation-not-allowed': 'Operation not allowed.',
-    'auth/weak-password': 'Password is too weak. Use at least 6 characters.',
-    'auth/user-disabled': 'This account has been disabled.',
-    'auth/user-not-found': 'No account found with this email.',
-    'auth/wrong-password': 'Incorrect password.',
-    'auth/invalid-credential': 'Invalid email or password.',
-    'auth/network-request-failed': 'Network error. Please check your connection.',
-    'auth/too-many-requests': 'Too many attempts. Please try again later.',
-  };
-  
-  return errorMessages[errorCode] || 'An error occurred. Please try again.';
-};
+// Export auth for other files to use
+export { auth };
