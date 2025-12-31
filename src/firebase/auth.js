@@ -8,9 +8,9 @@ import {
   signInWithCredential,
   updateProfile,
   getReactNativePersistence
-} from 'firebase/auth';
-import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
-import { initializeAuth } from 'firebase/auth';
+} from '../firebase/auth.js';
+import { doc, setDoc, getDoc, serverTimestamp } from '../firebase/firestore';
+import { initializeAuth } from '../firebase/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { app, db } from './config';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
