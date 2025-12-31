@@ -1,4 +1,3 @@
-// firebase/auth.js
 import { 
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -13,7 +12,7 @@ import {
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { initializeAuth } from 'firebase/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { app, db } from './config';  // Import app and db from config
+import { app, db } from './config';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
 // 🔥 CRITICAL: Initialize auth here to avoid circular dependency

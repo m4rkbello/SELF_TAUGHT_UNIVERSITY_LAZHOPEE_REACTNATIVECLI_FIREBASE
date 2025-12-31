@@ -3,9 +3,8 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuth } from '../context/AuthContext';
 
-// ✅ Make sure these imports are correct
 import LoginScreen from '../screens/auth/LoginScreen';
-import RegisterScreen from '../screens/auth/RegisterScreen'; // Check this path!
+import RegisterScreen from '../screens/auth/RegisterScreen';
 import DashboardScreen from '../screens/home/Dashboard';
 
 const Stack = createNativeStackNavigator();
