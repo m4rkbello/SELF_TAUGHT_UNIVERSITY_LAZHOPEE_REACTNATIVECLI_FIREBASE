@@ -15,10 +15,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { app, db } from './config';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
-// 🔥 CRITICAL: Initialize auth here to avoid circular dependency
 let auth;
 
-// Initialize auth if it's not already initialized
 try {
   if (app) {
     auth = initializeAuth(app, {
