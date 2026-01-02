@@ -15,8 +15,6 @@ import {
 } from 'firebase/firestore';
 import { db } from './config';
 
-// ===== CREATE =====
-
 // Create a new document with auto-generated ID
 export const createDocument = async (collectionName, data) => {
   try {
