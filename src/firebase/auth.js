@@ -12,7 +12,7 @@ import {
 import { doc, setDoc, getDoc, serverTimestamp } from '../firebase/firestore';
 import { initializeAuth } from '../firebase/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { app, db } from './config';
+import { app, db } from '../firebase/config.js';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
 let auth;

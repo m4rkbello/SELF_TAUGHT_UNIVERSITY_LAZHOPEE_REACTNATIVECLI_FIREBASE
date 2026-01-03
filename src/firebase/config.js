@@ -16,17 +16,14 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 
-// Initialize Auth with AsyncStorage for React Native
 export const auth = initializeAuth(app, {
   persistence: getReactNativePersistence(AsyncStorage)
 });
 
-// Services
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 export const realtimeDb = getDatabase(app);
 
-// Add debug log to verify initialization
 console.log('✅ Firebase initialized:', {
   auth: !!auth,
   db: !!db,
