@@ -22,11 +22,9 @@ function LoginScreen({ navigation }) {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   
-  // Get auth functions from context
   const { signIn, googleSignIn, error } = useAuth();
 
   const handleLogin = async () => {
-    // Validation
     if (!email || !password) {
       Alert.alert('Error', 'Please enter both email and password');
       return;
