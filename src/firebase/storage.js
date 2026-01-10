@@ -19,6 +19,7 @@ export const uploadFile = async (path, file) => {
       url: downloadURL,
       path: path
     };
+    
   } catch (error) {
     return {
       success: false,
