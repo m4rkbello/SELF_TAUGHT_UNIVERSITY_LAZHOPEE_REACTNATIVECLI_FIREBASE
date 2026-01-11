@@ -13,8 +13,12 @@ import { auth, db } from '../firebase/config.js'; // Import auth from config
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
 // Configure Google SignIn
+// IMPORTANT: Use the Web Client ID from Firebase Console > Project Settings
+// NOT the Android Client ID
 GoogleSignin.configure({
   webClientId: '656684881970-9bu6iidogjm9bbforsm5afbm44rra7v3.apps.googleusercontent.com',
+  offlineAccess: true, // To get refresh token
+  scopes: ['profile', 'email'], // Optional: add specific scopes
 });
 
 console.log('✅ Auth module loaded, using auth from config');

@@ -155,7 +155,7 @@ function LoginScreen({ navigation }) {
             <Text style={styles.buttonText}>Login</Text>
           )}
         </TouchableOpacity>
-
+        
         {/* Display Error if any */}
         {error && (
           <Text style={styles.errorText}>{error}</Text>
