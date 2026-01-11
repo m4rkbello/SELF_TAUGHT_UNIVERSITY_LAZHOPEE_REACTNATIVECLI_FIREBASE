@@ -6,34 +6,18 @@ import {
   sendPasswordResetEmail,
   GoogleAuthProvider,
   signInWithCredential,
-  updateProfile,
-  getReactNativePersistence
-} from '../firebase/auth.js';
-import { doc, setDoc, getDoc, serverTimestamp } from '../firebase/firestore';
-import { initializeAuth } from '../firebase/auth';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { app, db } from '../firebase/config.js';
+  updateProfile
+} from 'firebase/auth';
+import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { auth, db } from '../firebase/config.js'; // Import auth from config
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
-
-let auth;
-
-try {
-  if (app) {
-    auth = initializeAuth(app, {
-      persistence: getReactNativePersistence(AsyncStorage)
-    });
-    console.log('✅ Auth initialized in auth.js');
-  } else {
-    console.error('❌ App not initialized');
-  }
-} catch (error) {
-  console.error('❌ Error initializing auth in auth.js:', error);
-}
 
 // Configure Google SignIn
 GoogleSignin.configure({
   webClientId: '656684881970-9bu6iidogjm9bbforsm5afbm44rra7v3.apps.googleusercontent.com',
 });
+
+console.log('✅ Auth module loaded, using auth from config');
 
 // Helper function to ensure auth is initialized
 const getAuth = () => {
