@@ -17,7 +17,6 @@ export const AuthProvider = ({ children }) => {
   const [authReady, setAuthReady] = useState(false);
 
   useEffect(() => {
-    console.log('👂 AuthProvider: Setting up auth state listener...');
     
     const initTimeout = setTimeout(() => {
       // Listen to auth state changes
