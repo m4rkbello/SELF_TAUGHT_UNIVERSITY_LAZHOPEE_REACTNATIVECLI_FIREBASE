@@ -9,16 +9,14 @@ import {
   updateProfile
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
-import { auth, db } from '../firebase/config.js'; // Import auth from config
+import { auth, db } from '../firebase/config.js';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
 // Configure Google SignIn
-// IMPORTANT: Use the Web Client ID from Firebase Console > Project Settings
-// NOT the Android Client ID
 GoogleSignin.configure({
   webClientId: '656684881970-9bu6iidogjm9bbforsm5afbm44rra7v3.apps.googleusercontent.com',
-  offlineAccess: true, // To get refresh token
-  scopes: ['profile', 'email'], // Optional: add specific scopes
+  offlineAccess: true,
+  scopes: ['profile', 'email'],
 });
 
 console.log('✅ Auth module loaded, using auth from config');
@@ -32,7 +30,7 @@ const getAuth = () => {
   return auth;
 };
 
-// Export functions that use auth and db
+// Sign Up with Email
 export const signUpWithEmail = async (email, password, userData) => {
   try {
     console.log('🔵 Creating user account...');
@@ -89,6 +87,7 @@ export const signUpWithEmail = async (email, password, userData) => {
   }
 };
 
+// Sign In with Email
 export const signInWithEmail = async (email, password) => {
   try {
     console.log('🔵 Signing in with email...');
@@ -128,20 +127,43 @@ export const signInWithEmail = async (email, password) => {
   }
 };
 
+// Sign In with Google - FIXED VERSION
 export const signInWithGoogle = async () => {
   try {
     console.log('🔵 Starting Google Sign-In...');
+    
+    // Check if Google Play Services are available
     await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
-    const { idToken } = await GoogleSignin.signIn();
+    
+    // Sign in and get user info
+    const userInfo = await GoogleSignin.signIn();
+    console.log('✅ Google Sign-In successful, user info:', userInfo);
+    
+    // IMPORTANT FIX: Get idToken from userInfo object
+    const idToken = userInfo.data?.idToken || userInfo.idToken;
+    
+    if (!idToken) {
+      console.error('❌ No idToken received from Google Sign-In');
+      console.log('Full userInfo object:', JSON.stringify(userInfo, null, 2));
+      throw new Error('No ID token received from Google Sign-In');
+    }
+    
+    console.log('✅ ID Token received, creating Firebase credential...');
 
     const currentAuth = getAuth();
     const googleCredential = GoogleAuthProvider.credential(idToken);
+    
+    console.log('✅ Credential created, signing in to Firebase...');
     const result = await signInWithCredential(currentAuth, googleCredential);
     const user = result.user;
+    
+    console.log('✅ Firebase sign-in successful:', user.uid);
 
+    // Check if user exists in Firestore
     const userDoc = await getDoc(doc(db, 'users', user.uid));
 
     if (!userDoc.exists()) {
+      console.log('🔵 Creating new user document...');
       const nameParts = user.displayName?.split(' ') || [];
       const userData = {
         firstName: nameParts[0] || '',
@@ -156,25 +178,52 @@ export const signInWithGoogle = async () => {
         uid: user.uid
       };
       await setDoc(doc(db, 'users', user.uid), userData);
+      console.log('✅ User document created');
       return { success: true, user: { uid: user.uid, email: user.email, ...userData } };
     }
 
     const userData = userDoc.data();
+    console.log('✅ User document retrieved');
     return { success: true, user: { uid: user.uid, email: user.email, ...userData } };
+    
   } catch (error) {
     console.error('❌ Google Sign-In error:', error);
+    console.error('Error code:', error.code);
+    console.error('Error message:', error.message);
+    
     let errorMessage = 'Google Sign-In failed';
-    if (error.code === 'CANCELED') errorMessage = 'Sign-in cancelled.';
-    return { success: false, error: errorMessage || 'Google Sign-In failed' };
+    
+    if (error.code === 'CANCELED' || error.code === '-5') {
+      errorMessage = 'Sign-in cancelled by user.';
+    } else if (error.code === 'SIGN_IN_CANCELLED') {
+      errorMessage = 'Sign-in cancelled.';
+    } else if (error.code === 'IN_PROGRESS') {
+      errorMessage = 'Sign-in already in progress.';
+    } else if (error.code === 'PLAY_SERVICES_NOT_AVAILABLE') {
+      errorMessage = 'Google Play Services not available.';
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+    
+    return { success: false, error: errorMessage };
   }
 };
 
+// Log Out
 export const logOut = async () => {
   try {
     console.log('🔵 Logging out...');
+    
+    // Sign out from Google if signed in
+    const isSignedIn = await GoogleSignin.isSignedIn();
+    if (isSignedIn) {
+      await GoogleSignin.signOut();
+      console.log('✅ Google sign-out successful');
+    }
+    
     const currentAuth = getAuth();
     await signOut(currentAuth);
-    console.log('✅ Logout successful');
+    console.log('✅ Firebase logout successful');
     return { success: true };
   } catch (error) {
     console.error('❌ Logout error:', error);
@@ -182,6 +231,7 @@ export const logOut = async () => {
   }
 };
 
+// Observe Auth State
 export const observeAuthState = (callback) => {
   try {
     const currentAuth = getAuth();
@@ -204,11 +254,11 @@ export const observeAuthState = (callback) => {
     });
   } catch (error) {
     console.error('❌ Error setting up auth listener:', error);
-    // Return empty unsubscribe function
     return () => {};
   }
 };
 
+// Reset Password
 export const resetPassword = async (email) => {
   try {
     const currentAuth = getAuth();
@@ -233,5 +283,4 @@ export const resetPassword = async (email) => {
   }
 };
 
-// Export auth for other files to use
 export { auth };
