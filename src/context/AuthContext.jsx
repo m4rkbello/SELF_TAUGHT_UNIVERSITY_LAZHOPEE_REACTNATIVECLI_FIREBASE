@@ -16,7 +16,7 @@ export const AuthProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const [authReady, setAuthReady] = useState(false);
 
-  useEffect(() => {
+  useEffect(() => { 
     
     const initTimeout = setTimeout(() => {
       // Listen to auth state changes
