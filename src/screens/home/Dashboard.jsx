@@ -15,6 +15,7 @@ const { width, height } = Dimensions.get('window');
 
 function DashboardScreen({ navigation }) {
   const { user, signOut } = useAuth();
+  console.log(user,"TEST!");
 
   const handleLogout = async () => {
     Alert.alert(
@@ -138,7 +139,7 @@ function DashboardScreen({ navigation }) {
         <View style={styles.infoRow}>
           <Text style={styles.infoLabel}>Provider:</Text>
           <Text style={styles.infoValue}>
-            {user?.providerData?.[0]?.providerId || 'Unknown'}
+            {user?.provider || 'Unknown'}
           </Text>
         </View>
       </View>
